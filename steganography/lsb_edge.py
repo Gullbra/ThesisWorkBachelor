@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-from steganografy.steganography import Steganography
+from steganography.steganography import Steganography
 
 class LsbEdge(Steganography):
     """

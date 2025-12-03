@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 import random
-from steganografy.steganography import Steganography
+from steganography.steganography import Steganography
 
 class LsbMatching(Steganography):
     """

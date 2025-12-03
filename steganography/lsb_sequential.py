@@ -1,6 +1,6 @@
 from PIL import Image
 import sys
-from steganografy.steganography import Steganography
+from steganography.steganography import Steganography
 
 
 class LsbSequential(Steganography):
