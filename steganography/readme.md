@@ -2,12 +2,12 @@
 
 # LSB Methods
 
-| Method | desc |
-| ---- | --- |
-| Sequential LSB Replacement | Read image pixels, directly manipulate the LSB of the pixel values e.g., using bitwise operations like & | 
-| Randomized LSB Embedding | Use a cryptographic key as the seed for a Pseudo-Random Number Generator (PRNG). The PRNG output sequence determines which pixel locations are selected for embedding the secret message, instead of just using them sequentially. |
-| LSB Matching ($\pm 1$ Embedding) | Implement the core logic: if the message bit doesn't match the pixel's LSB, randomly add +1 or -1 to the pixel value. This requires manual pixel-wise logic using Python/Numpy. |
-| Adaptive Steganography | This requires calculating a "complexity" or "texture" map (e.g., based on edge detection like Canny or local variance) for the cover image. Only pixels in high-complexity regions are selected for embedding. |
+| Method | desc | source |
+| ---- | --- | -- |
+| Sequential LSB Replacement | Read image pixels, directly manipulate the LSB of the pixel values e.g., using bitwise operations like & | [(Lou et al, 2010)](https://www.researchgate.net/publication/220177204_Edge_Adaptive_Image_Steganography_Based_on_LSB_Matching_Revisited#:~:text=the%20obvious%20asymmetry%20artifacts%20introduced,to%20analyze%20the%20LSBM%20scheme.) |
+| Randomized LSB Embedding | Use a cryptographic key as the seed for a Pseudo-Random Number Generator (PRNG). The PRNG output sequence determines which pixel locations are selected for embedding the secret message, instead of just using them sequentially. | [(Khalind et al, ...)](https://airccj.org/CSCP/vol5/csit53210.pdf), |
+| LSB Matching ($\pm 1$ Embedding) | Implement the core logic: if the message bit doesn't match the pixel's LSB, randomly add +1 or -1 to the pixel value. This requires manual pixel-wise logic using Python/Numpy. | [(Lou et al, 2010)](https://www.researchgate.net/publication/220177204_Edge_Adaptive_Image_Steganography_Based_on_LSB_Matching_Revisited#:~:text=the%20obvious%20asymmetry%20artifacts%20introduced,to%20analyze%20the%20LSBM%20scheme.) |
+| Adaptive Steganography | This requires calculating a "complexity" or "texture" map (e.g., based on edge detection like Canny or local variance) for the cover image. Only pixels in high-complexity regions are selected for embedding. | [(Albkosh et al, 2025)](https://www.researchgate.net/publication/393495879_An_Improved_Image_Steganography_Method_for_Secure_and_High-_Capacity_Data_Transmission_Using_Adaptive_LSB_Embedding#:~:text=Unlike%20conventional%20methods%20that%20use%20fixed,data%20without%20noticeable%20distortion%2C%20while), [(Smitha, 2018)](https://www.researchgate.net/publication/330077804_Sobel_edge_detection_technique_implementation_for_image_steganography_analysis) |
 
 <br/>
 
