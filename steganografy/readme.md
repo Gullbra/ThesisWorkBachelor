@@ -12,6 +12,28 @@
 <br/>
 
 
+## Sequential LSB Replacement Steganography
+
+Sequential LSB Replacement is the most fundamental and straightforward method of hiding data in the spatial domain of an image. It relies on modifying the least significant bit of every color channel in a fixed, predictable order.
+
+**Core Principle**
+
+The method capitalizes on the human eye's inability to detect minor changes in color intensity. By changing the LSB of a pixel value (a change of at most $\pm 1$ unit), the visual appearance of the image is preserved.
+
+* Path: Fixed and linear (left-to-right, top-to-bottom).
+
+* Vulnerability: This predictable path and direct replacement make the resulting stego-image highly vulnerable to sophisticated statistical steganalysis techniques.
+
+**Encoding**
+
+1. The secret message is first appended with a unique end marker (e.g., ###END###) to define its boundary. The entire string is then converted into a long stream of binary bits (8 bits per character).
+2. Loop through pixels from top-left
+3. LSB Replacement (Bitwise Operation): For each color channel, the following bitwise operation is performed to embed a single secret bit:
+    * Clearing: channel_val & 0xFE (where 0xFE is binary 11111110) resets the current LSB to zero.
+    * Setting: | secret_bit sets the LSB to the required secret bit (0 or 1).
+    * This sequence allows 3 bits of secret data to be embedded per pixel.
+
+
 ## Randomized LSB Embedding
 
 The key to randomized LSB is the use of a secret key (often a password or a number) to initialize a Pseudo-Random Number Generator (PRNG).
