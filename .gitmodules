@@ -1,0 +1,3 @@
+[submodule "srnet_model"]
+	path = srnet_model
+	url = https://github.com/Gullbra/Pytorch-implementation-of-SRNet.git
