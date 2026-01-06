@@ -13,12 +13,21 @@ class LsbSequential:
   def __init__(self):
     pass
 
+  no_channels = {
+    'L': 1, 
+    'RGB': 3
+  }
+  pixel_to_channel_map = {
+    'L': lambda x: [x], 
+    'RGB': lambda x: list(x)
+  }
 
   def encode_message(self, 
     image_path: Path, 
     target_threshold: float, 
     output_path: Path, 
     verbose: bool = False,
+    mode: str = 'L',
     delimiter: str = "###END###"
   ) -> bytes:
     """
@@ -28,20 +37,22 @@ class LsbSequential:
     if target_threshold < 0 or target_threshold > 1:
       raise ValueError("target_threshold must be between 0 and 1")
 
-    # Open image and convert to RGB
-    img = Image.open(image_path).convert('RGB')
+    if mode not in self.no_channels:
+      raise ValueError(f"Unsupported image mode: {mode}. Supported modes: {list(self.no_channels.keys())}")
+
+    # Open image as mode
+    img = Image.open(image_path).convert(mode)
     width, height = img.size
     pixels = img.load()
     
     # Storage capacity
-    capacity_total_bits = width * height * 3
+    capacity_total_bits = width * height * self.no_channels[mode]
     delimiter_bits = len(delimiter) * 8
     capacity_netto_bits = capacity_total_bits - len(delimiter) * 8
     if capacity_netto_bits <= 0:
       raise ValueError("Image too small to encode delimiter.")
 
     no_of_bits_to_encode = int(target_threshold * capacity_netto_bits)
-    # no_of_bits_to_encode = 3 + 8
 
     if verbose:
       label1 = "Image dimensions:".ljust(40)
@@ -98,8 +109,7 @@ class LsbSequential:
 
     for y in range(height):
       for x in range(width):
-        r, g, b = pixels[x, y]
-        channels = [r, g, b]
+        channels = self.pixel_to_channel_map[mode](pixels[x, y]) 
 
         for channel_index in range(len(channels)):
           current_byte = full_message_in_bytes[byte_index]
@@ -113,8 +123,7 @@ class LsbSequential:
               print("next_bit break")
             break
         
-        r, g, b = channels
-        pixels[x, y] = (r, g, b)
+        pixels[x, y] = tuple(channels)
         if break_loops:
           if verbose:
             print("x loop break")
@@ -134,12 +143,12 @@ class LsbSequential:
     return secret_message
 
 
-  def decode_message(self, image_path: Path, delimiter: str = "###END###") -> bytes:
+  def decode_message(self, image_path: Path, delimiter: str = "###END###", mode: str = 'L') -> bytes:
     """
     Decode a message from an image using LSB steganography.
     """
     # Open image
-    img = Image.open(image_path).convert('RGB')
+    img = Image.open(image_path).convert(mode)
     width, height = img.size
     pixels = img.load()
     
@@ -158,7 +167,7 @@ class LsbSequential:
     
     for y in range(height):
       for x in range(width):
-        channels = list(pixels[x, y])
+        channels = self.pixel_to_channel_map[mode](pixels[x, y])
         
         for channel in channels:
           binary_message.append(channel & 1)
@@ -222,23 +231,24 @@ if __name__ == "__main__":
   output_image = Path('./output_img.png')
   delimiter = "###END###"
 
-  try:
-    print("\n...encoding random data")
-    generated_message = steg_tool.encode_message(
-      input_path, 
-      target_threshold, 
-      output_image, 
-      delimiter=delimiter
-    )
-    print(f"Generated data length: {len(generated_message)} bytes")
-    # print(generated_message)
+  # try:
+  print("\n...encoding random data")
+  generated_message = steg_tool.encode_message(
+    input_path, 
+    target_threshold, 
+    output_image, 
+    delimiter=delimiter
+  )
+  print(f"Generated data length: {len(generated_message)} bytes")
+  # print(generated_message)
 
-    print("\n...decoding message")
-    hidden_data = steg_tool.decode_message(output_image, delimiter=delimiter)
-    print(f"Decoded data length: {len(hidden_data)} bytes")
-    # print(hidden_data)
-    
-    print(f"Endcoding-Decoding successful: {generated_message == hidden_data}")
-  except Exception as e:
-    print(f"Error: {e}")
-    sys.exit(1)
+  print("\n...decoding message")
+  hidden_data = steg_tool.decode_message(output_image, delimiter=delimiter)
+  print(f"Decoded data length: {len(hidden_data)} bytes")
+  # print(hidden_data)
+  
+  print(f"Endcoding-Decoding successful: {generated_message == hidden_data}")
+  # except Exception as e:
+  #   print(f"Error: {e}")
+  #   print(e.__traceback__.tb_lineno)
+  #   sys.exit(1)
