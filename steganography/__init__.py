@@ -1,1 +1,1 @@
-from .lsb_capacity import LsbSequential
+from .lsb_sequential import LsbSequential
