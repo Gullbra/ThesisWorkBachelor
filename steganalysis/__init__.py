@@ -1,1 +1,1 @@
-from .rs_analysis import RSAnalysis
+from .rs_analysis_vibe_v1 import RSAnalysis
