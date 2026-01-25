@@ -1,6 +1,5 @@
 import secrets
 import string
-# import math
 
 
 def generate_random_bytes(num_bits: int) -> bytes:
@@ -33,6 +32,31 @@ def generate_random_str_as_bytes(num_storage_bits: int) -> bytes:
   return ''.join(secrets.choice(charset) for _ in range(needed_bytes)).encode('utf-8')
 
 
+def iter_bits_from_bytes(data: bytes, total_bits: int):
+  if total_bits <= 0:
+    return
+    yield  # makes it a generator
+
+  full_bytes = total_bits // 8
+  remaining_bits = total_bits % 8
+
+  idx = 0
+
+  # First byte may be partial
+  if remaining_bits != 0:
+    b = data[0]
+    for i in range(remaining_bits - 1, -1, -1):
+      yield (b >> i) & 1
+    idx = 1
+
+  # All remaining bytes are full
+  for j in range(idx, idx + full_bytes):
+    b = data[j]
+    for i in range(7, -1, -1):
+      yield (b >> i) & 1
+
+
+
 if __name__ == "__main__":
   # print(generate_random_bytes(256*256))
   # print(generate_random_str_as_bytes(30))
@@ -48,3 +72,7 @@ if __name__ == "__main__":
     print(f"Sample: {message[:20]}...")
     print()
 
+  # bits = 5
+  # b = generate_random_bytes(bits)
+  # print(bin(b[0]))
+  # print(list(iter_bits_from_bytes(b, bits)))
