@@ -202,13 +202,17 @@ class LsbRandom:
     
     return bytes(byte_array)
 
+
+
 if __name__ == "__main__":
-  steg_tool = LsbRandom(123456789)
 
   input_path = Path('./Picture1.png')
-  target_threshold = 0.5
   output_image = Path('./output_img.png')
+  target_threshold = 0.5
+  sercret_key = 123456789
  
+  steg_tool = LsbRandom(sercret_key)
+
   print("\n...encoding random data")
   generated_message = steg_tool.encode_message(
     image_path=input_path, 
@@ -223,9 +227,7 @@ if __name__ == "__main__":
     verbose=True
   )
 
-  print(f"generated msg lenght: {len(generated_message)}\ndecoded msg lenght: {len(decoded_message)}")
+  print(f"\ngenerated msg lenght: {len(generated_message)}\ndecoded msg lenght: {len(decoded_message)}")
   print(f"equal: {generated_message == decoded_message}")
-
-  print(generated_message[:8])
-  print(decoded_message[:8])
-
+  print(f"First 8 bytes generated: {generated_message[:8]}")
+  print(f"First 8 bytes decoded: {decoded_message[:8]}")
