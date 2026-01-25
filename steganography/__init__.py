@@ -1,1 +1,2 @@
-from .lsb_sequential import LsbSequential
+from .lsb_sequential_Martin import LsbSequential
+from .lsb_sequential_Jan import lsb_sequential_encode
