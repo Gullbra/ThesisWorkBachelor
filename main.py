@@ -9,14 +9,13 @@ class ImgGroup(str, Enum):
   VAL = "VALIDATION"
 
 
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01[.png]"
 image_paths = {
-  ImgGroup.TEST: (BASE_DIR / "images/BOSSbase_1.01[.png]/test").resolve(),
-  ImgGroup.TRAIN: (BASE_DIR / "images/BOSSbase_1.01[.png]/train").resolve(),
-  ImgGroup.VAL: (BASE_DIR / "images/BOSSbase_1.01[.png]/val").resolve()
+  ImgGroup.TEST: (BASE_DIR / "test").resolve(),
+  ImgGroup.TRAIN: (BASE_DIR / "train").resolve(),
+  ImgGroup.VAL: (BASE_DIR / "val").resolve()
 }
-for key,path in image_paths.items():
-  path.mkdir(parents=True, exist_ok=True)
+for key, path in image_paths.items():
   (path / "cover").resolve().mkdir(parents=True, exist_ok=True)
   (path / "stego").resolve().mkdir(parents=True, exist_ok=True)
   image_paths[key] = {
@@ -27,17 +26,18 @@ for key,path in image_paths.items():
 
 def test_model():
   from srnet_model import test_srnet, TestMode
+
   test_srnet(
     cover_img_dir=image_paths[ImgGroup.TEST]["cover"],
     stego_img_dir=image_paths[ImgGroup.TEST]["stego"],
     limit_images=120,
-    mode=TestMode.COVER_ONLY,
+    mode=TestMode.BALANCED,
     verbose=True
   )
 
 
 def create_stego_images(stenographic_function):
-  for key, path in image_paths.values():
+  for key, path in image_paths.items():
     print(f"Processing {key} images...")
     renumber_images(path["cover"], ask_confirmation=False) 
     cover_images = sorted(path["cover"].glob("*.png"))
@@ -45,7 +45,7 @@ def create_stego_images(stenographic_function):
     for index in range(len(cover_images)):
       image_path = cover_images[index]
       if index % 1000 == 0:
-        print(f"{index}/{len(cover_images)} ({index/len(cover_images):.1f}) images embedded")
+        print(f"{index}/{len(cover_images)} ({index/len(cover_images) * 100:.1f}%) images embedded")
 
       stenographic_function(
         image_path,
@@ -63,7 +63,20 @@ def create_stego_lsb_random(threshold: float):
   ))
 
 
+def create_stego_lsb_matching(threshold: float):
+  from steganography import LsbMatching
+  steg_tool = LsbMatching()
+
+  create_stego_images(lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+    image_path=cover_image_path,
+    output_path=stego_image_path,
+    target_threshold=threshold,
+  ))
+
+
 if __name__ == "__main__":
+  # print(image_paths)
   # create_stego_lsb_random(0.5)
+  # create_stego_lsb_matching(0.5)
   test_model()
   pass

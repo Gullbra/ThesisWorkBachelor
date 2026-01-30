@@ -7,8 +7,10 @@ import locale
 locale.setlocale(locale.LC_ALL, '')
 if __name__ == "__main__":
   from generate import generate_random_bytes
+  from ColorModel import ColorModel
 else:
   from .generate import generate_random_bytes
+  from .ColorModel import ColorModel
 
 
 class LsbSequential:
@@ -16,8 +18,8 @@ class LsbSequential:
     pass
 
   no_channels = {
-    'L': 1, 
-    'RGB': 3
+    ColorModel.GRAYSCALE: 1, 
+    ColorModel.RGB: 3
   }
 
   def encode_message(self, 
@@ -25,7 +27,7 @@ class LsbSequential:
     target_threshold: float, 
     output_path: Path, 
     verbose: bool = False,
-    mode: str = 'L',
+    color_model: ColorModel = ColorModel.GRAYSCALE,
     delimiter: str = "###END###"
   ) -> bytes:
     """
@@ -35,16 +37,23 @@ class LsbSequential:
     if target_threshold < 0 or target_threshold > 1:
       raise ValueError("target_threshold must be between 0 and 1")
 
-    if mode not in self.no_channels:
-      raise ValueError(f"Unsupported image mode: {mode}. Supported modes: {list(self.no_channels.keys())}")
+    if color_model not in self.no_channels:
+      raise ValueError(f"Unsupported image mode: {color_model}. Supported modes: {list(self.no_channels.keys())}")
+    
+    if not Path(image_path).exists() or not Path(image_path).is_file():
+      raise FileNotFoundError(f"Image file not found: {image_path}")
+    
+    if not output_path.parent.exists():
+      raise FileNotFoundError("Stego directory does not exist.")
+
 
     # Open image as mode and convert to numpy array
-    img = Image.open(image_path).convert(mode)
+    img = Image.open(image_path).convert(color_model)
     width, height = img.size
     img_array = np.array(img)
     
     # Storage capacity
-    capacity_total_bits = width * height * self.no_channels[mode]
+    capacity_total_bits = width * height * self.no_channels[color_model]
     delimiter_bits = len(delimiter) * 8
     capacity_netto_bits = capacity_total_bits - delimiter_bits
     if capacity_netto_bits <= 0:
@@ -104,13 +113,13 @@ class LsbSequential:
           bit_position += 1
     
     # Flatten image array to 1D for faster processing
-    if mode == 'RGB':
+    if color_model == ColorModel.RGB:
       flat_pixels = img_array.reshape(-1, 3)
     else:  # mode == 'L'
       flat_pixels = img_array.reshape(-1, 1)
     
     # Calculate how many pixels we need to modify
-    pixels_needed = (total_message_bits + self.no_channels[mode] - 1) // self.no_channels[mode]
+    pixels_needed = (total_message_bits + self.no_channels[color_model] - 1) // self.no_channels[color_model]
     
     # Clear LSBs and set new bits using vectorized operations
     flat_pixels_copy = flat_pixels.copy()
@@ -119,19 +128,19 @@ class LsbSequential:
     # Set the message bits
     bit_idx = 0
     for pixel_idx in range(pixels_needed):
-      for channel_idx in range(self.no_channels[mode]):
+      for channel_idx in range(self.no_channels[color_model]):
         if bit_idx < total_message_bits:
           flat_pixels_copy[pixel_idx, channel_idx] |= all_bits[bit_idx]
           bit_idx += 1
     
     # Reshape back to image dimensions
-    if mode == 'RGB':
+    if color_model == ColorModel.RGB:
       modified_array = flat_pixels_copy.reshape(height, width, 3)
     else:
       modified_array = flat_pixels_copy.reshape(height, width)
     
     # Convert back to PIL Image and save
-    result_img = Image.fromarray(modified_array, mode=mode)
+    result_img = Image.fromarray(modified_array, mode=color_model)
     result_img.save(output_path, 'PNG')
     
     if verbose:
@@ -141,16 +150,16 @@ class LsbSequential:
     return secret_message
 
 
-  def decode_message(self, image_path: Path, delimiter: str = "###END###", mode: str = 'L') -> bytes:
+  def decode_message(self, image_path: Path, delimiter: str = "###END###", color_model: ColorModel = ColorModel.GRAYSCALE) -> bytes:
     """
     Decode a message from an image using LSB steganography.
     """
     # Open image and convert to numpy array
-    img = Image.open(image_path).convert(mode)
+    img = Image.open(image_path).convert(color_model)
     img_array = np.array(img)
     
     # Flatten image array
-    if mode == 'RGB':
+    if color_model == ColorModel.RGB:
       flat_pixels = img_array.reshape(-1, 3)
     else:
       flat_pixels = img_array.reshape(-1, 1)
