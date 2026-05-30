@@ -53,6 +53,16 @@ def create_stego_images(stenographic_function):
       )
 
 
+def create_stego_lsb_sequential(threshold: float):
+  from steganography import LsbSequential
+  steg_tool = LsbSequential()
+  create_stego_images(lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+    image_path=cover_image_path,
+    output_path=stego_image_path,
+    target_threshold=threshold,
+  ))
+
+
 def create_stego_lsb_random(threshold: float):
   from steganography import LsbRandom
   steg_tool = LsbRandom(123456789)
@@ -87,8 +97,9 @@ def create_stego_lsb_adaptive(threshold: float):
 
 if __name__ == "__main__":
   # print(image_paths)
-  # create_stego_lsb_random(0.5)
-  # create_stego_lsb_matching(0.5)
-  create_stego_lsb_adaptive(0.5)
+  create_stego_lsb_sequential(0.25)
+  # create_stego_lsb_random(0.75)
+  # create_stego_lsb_matching(0.25)
+  # create_stego_lsb_adaptive(0.5)
   # test_model()
   pass
