@@ -1,6 +1,11 @@
 
-python -m venv venv
+function Invoke-Step {
+  & $args
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+}
 
-venv/Scripts/activate
-
-pip install requirements.txt
+Invoke-Step py -3.12 -m venv venv
+& .\venv\Scripts\Activate.ps1
+Invoke-Step pip install -r requirements.txt
