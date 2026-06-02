@@ -1,3 +1,4 @@
+print("Importing modules for LsbSequential...")
 from pathlib import Path
 from PIL import Image
 import numpy as np
@@ -13,6 +14,7 @@ else:
     from .ColorModel import ColorModel
 
 from numpy.lib.stride_tricks import sliding_window_view
+print("Modules imported.")
 
 
 class LsbSequential:

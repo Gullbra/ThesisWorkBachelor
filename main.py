@@ -99,8 +99,8 @@ def create_stego_lsb_matching(image_paths, threshold: float):
 
 
 def create_stego_lsb_adaptive(image_paths, threshold: float):
-  from steganography import LsbSobelEdgeBitTh
-  steg_tool = LsbSobelEdgeBitTh()
+  from steganography import LsbSobelEdge
+  steg_tool = LsbSobelEdge()
 
   create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
     image_path=cover_image_path,

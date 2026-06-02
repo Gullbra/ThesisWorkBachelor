@@ -1,16 +1,16 @@
-import itertools
+print("Importing modules for LsbMatching...")
 import math
 from pathlib import Path
 import numpy as np
 from PIL import Image
-import random
 
 if __name__ == "__main__":
-  from generate import generate_random_bytes, iter_bits_from_bytes
+  from generate import generate_random_bytes
   from ColorModel import ColorModel
 else:
-  from .generate import generate_random_bytes, iter_bits_from_bytes
+  from .generate import generate_random_bytes
   from .ColorModel import ColorModel
+print("Modules imported.")
 
 
 class LsbMatching:
@@ -70,41 +70,39 @@ class LsbMatching:
       print(f"{label4} {target_threshold * 100}%")
       print(f"{label3} {payload_length_bits:n} bits ({payload_length_bits / 8:n} bytes)")
 
-    # Generate message and embedding path
-    message_in_bytes = generate_random_bytes(payload_length_bits)
-    header_in_bytes = self._generate_header_bytes(payload_length_bits)
+    # Generate message
+    message_bytes = generate_random_bytes(payload_length_bits)
+    header_bytes = self._generate_header_bytes(payload_length_bits)
+    header_bits = np.unpackbits(np.frombuffer(header_bytes, dtype=np.uint8))
+    payload_bits = np.unpackbits(np.frombuffer(message_bytes, dtype=np.uint8))[-payload_length_bits:]
+    all_bits = np.concatenate((header_bits, payload_bits))
 
     # Embedd
-    bitstream = itertools.chain(
-      iter_bits_from_bytes(header_in_bytes, self.header_len_bits),
-      iter_bits_from_bytes(message_in_bytes, payload_length_bits)
+    modified = channel_values.copy()
+
+    # relevant_values contains references to the ones in maodified, and modified will be udated along with relevant_values
+    relevant_values = modified[:len(all_bits)]
+
+    # find everywhere where the lsb doesn't already match
+    mismatch_mask = (relevant_values & 1 != all_bits)
+
+    # the matching
+    rng = np.random.default_rng()
+    delta = rng.choice(
+      np.array([-1, 1], dtype=np.int16),
+      size=mismatch_mask.sum()
     )
+    values = (relevant_values[mismatch_mask].astype(np.int16)) + delta
 
-    if color_model != ColorModel.GRAYSCALE:
-      raise NotImplementedError("Only Gracescale is currently implemented")
-    
-    for i, (bit, indivudial_c_val) in enumerate(zip(bitstream, channel_values)):
-      current_lsb = indivudial_c_val & 1
-      
-      if bit == current_lsb:
-        continue
+    # handle overflow/underflow
+    values[values > 255] = 254
+    values[values < 0] = 1
 
-      new_channel_val = int(indivudial_c_val) + random.choice([-1, 1])
-      if new_channel_val > 255:
-        new_channel_val = indivudial_c_val - 1
-      elif new_channel_val < 0:
-        new_channel_val = indivudial_c_val + 1
+    relevant_values[mismatch_mask] = (values.astype(np.uint8))
 
-      channel_values[i] = np.uint8(new_channel_val)
+    Image.fromarray(modified.reshape(pixel_array.shape), mode=color_model.value).save(output_path)
 
-    # Reprocess pixels and save
-    pixel_array = channel_values.reshape(height, width, self.no_channels[color_model])
-    if self.no_channels[color_model] == 1:
-      pixel_array = pixel_array.squeeze()
-    Image.fromarray(pixel_array, mode=color_model.value).save(output_path)
-
-    # Returning message for testing
-    return message_in_bytes
+    return message_bytes
 
 
   def _generate_header_bytes(self, payload_len_bits: int) -> bytes:
@@ -134,19 +132,8 @@ class LsbMatching:
       raise NotImplementedError("Only Grayscale is currently implemented")
     
     # Extract header to determine payload length
-    header_bits = []
-    for i in range(self.header_len_bits):
-      lsb = channel_values[i] & 1
-      header_bits.append(lsb)
-    
-    # Convert header bits to bytes (MSB-first within each byte)
-    header_bytes = bytearray()
-    for i in range(0, self.header_len_bits, 8):
-      byte_bits = header_bits[i:i+8]
-      byte_value = 0
-      for bit in byte_bits:
-        byte_value = (byte_value << 1) | bit  # MSB first
-      header_bytes.append(byte_value)
+    header_bits = (channel_values[:self.header_len_bits] & 1)
+    header_bytes = np.packbits(header_bits).tobytes()
     
     # Convert bytes to integer (big-endian, matching the encoding)
     payload_length_bits = int.from_bytes(header_bytes, byteorder="big")
@@ -162,29 +149,27 @@ class LsbMatching:
       print(f"{label3} {payload_length_bits:n} bits ({payload_length_bits / 8:n} bytes)")
     
     # Extract message bits
-    message_bits = []
-    start_index = self.header_len_bits
-    end_index = start_index + payload_length_bits
-    
-    for i in range(start_index, end_index):
-      lsb = channel_values[i] & 1
-      message_bits.append(lsb)
-    
-    # Convert bits to bytes (MSB-first within each byte)
-    message_bytes = bytearray()
-    for i in range(0, len(message_bits), 8):
-      byte_bits = message_bits[i:i+8]
-      byte_value = 0
-      for bit in byte_bits:
-        byte_value = (byte_value << 1) | bit  # MSB first
-      message_bytes.append(byte_value)
-    
-    return bytes(message_bytes)
+    payload_bits = (
+      channel_values[self.header_len_bits: self.header_len_bits + payload_length_bits] & 1
+    )
+    num_pad_bits = (-payload_length_bits) % 8
+
+    if num_pad_bits:
+      payload_bits = np.concatenate((
+        np.zeros(
+          num_pad_bits,
+          dtype=np.uint8
+        ),
+        payload_bits
+      ))
+
+    return np.packbits(payload_bits).tobytes()
+  
 
 
 if __name__ == "__main__":
-  input_path = Path('./Picture1.png')
-  output_image = Path('./output_img.png')
+  input_path = Path('./cover/Picture1.png')
+  output_image = Path('./stego/output_img.png')
   target_threshold = 0.5
  
   steg_tool = LsbMatching()

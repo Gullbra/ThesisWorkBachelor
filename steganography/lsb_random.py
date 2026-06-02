@@ -1,3 +1,4 @@
+print("Importing modules for LsbRandom...")
 from pathlib import Path
 import math
 import numpy as np
@@ -12,6 +13,7 @@ if __name__ == "__main__":
 else:
     from .generate import generate_random_bytes
     from .ColorModel import ColorModel
+print("Modules imported.")
 
 
 class LsbRandom:
