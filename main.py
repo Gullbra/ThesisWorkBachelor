@@ -1,6 +1,7 @@
 from pathlib import Path
 from enum import Enum
 from rename_imgs import renumber_images
+import argparse
 
 
 class ImgGroup(str, Enum):
@@ -9,35 +10,39 @@ class ImgGroup(str, Enum):
   VAL = "VALIDATION"
 
 
-BASE_DIR = Path(__file__).parent
-image_paths = {
-  ImgGroup.TEST: (BASE_DIR / "images/BOSSbase_1.01[.png]/test").resolve(),
-  ImgGroup.TRAIN: (BASE_DIR / "images/BOSSbase_1.01[.png]/train").resolve(),
-  ImgGroup.VAL: (BASE_DIR / "images/BOSSbase_1.01[.png]/val").resolve()
-}
-for key,path in image_paths.items():
-  path.mkdir(parents=True, exist_ok=True)
-  (path / "cover").resolve().mkdir(parents=True, exist_ok=True)
-  (path / "stego").resolve().mkdir(parents=True, exist_ok=True)
-  image_paths[key] = {
-    "cover": (path / "cover").resolve(),
-    "stego": (path / "stego").resolve()
+DEFAULT_BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01[.png]"
+
+
+def build_image_paths(base_dir: Path) -> dict:
+  image_paths = {
+    ImgGroup.TEST: (base_dir / "test").resolve(),
+    ImgGroup.TRAIN: (base_dir / "train").resolve(),
+    ImgGroup.VAL: (base_dir / "val").resolve()
   }
+  for key, path in image_paths.items():
+    (path / "cover").mkdir(parents=True, exist_ok=True)
+    (path / "stego").mkdir(parents=True, exist_ok=True)
+    image_paths[key] = {
+      "cover": (path / "cover").resolve(),
+      "stego": (path / "stego").resolve()
+    }
+  return image_paths
 
 
-def test_model():
-  from srnet_model import test_srnet, TestMode
+def test_model(image_paths):
+  from steganalysis.srnet_model import test_srnet, TestMode
+
   test_srnet(
     cover_img_dir=image_paths[ImgGroup.TEST]["cover"],
     stego_img_dir=image_paths[ImgGroup.TEST]["stego"],
     limit_images=120,
-    mode=TestMode.COVER_ONLY,
+    mode=TestMode.BALANCED,
     verbose=True
   )
 
 
-def create_stego_images(stenographic_function):
-  for key, path in image_paths.values():
+def create_stego_images(image_paths, steganographic_function):
+  for key, path in image_paths.items():
     print(f"Processing {key} images...")
     renumber_images(path["cover"], ask_confirmation=False) 
     cover_images = sorted(path["cover"].glob("*.png"))
@@ -45,25 +50,126 @@ def create_stego_images(stenographic_function):
     for index in range(len(cover_images)):
       image_path = cover_images[index]
       if index % 1000 == 0:
-        print(f"{index}/{len(cover_images)} ({index/len(cover_images):.1f}) images embedded")
+        print(f"{index}/{len(cover_images)} ({index/len(cover_images) * 100:.1f}%) images embedded")
 
-      stenographic_function(
+      steganographic_function(
         image_path,
         path["stego"] / image_path.name
       )
 
 
-def create_stego_lsb_random(threshold: float):
-  from steganography import LsbRandom
-  steg_tool = LsbRandom(123456789)
-  create_stego_images(lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+def create_stego_lsb_sequential(image_paths, threshold: float):
+  from steganography import LsbSequential
+  steg_tool = LsbSequential()
+  create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
     image_path=cover_image_path,
     output_path=stego_image_path,
     target_threshold=threshold,
   ))
 
 
+def create_stego_lsb_random(image_paths, threshold: float):
+  from steganography import LsbRandom
+  steg_tool = LsbRandom(123456789)
+  create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+    image_path=cover_image_path,
+    output_path=stego_image_path,
+    target_threshold=threshold,
+  ))
+
+
+def create_stego_lsb_matching(image_paths, threshold: float):
+  from steganography import LsbMatching
+  steg_tool = LsbMatching()
+
+  create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+    image_path=cover_image_path,
+    output_path=stego_image_path,
+    target_threshold=threshold,
+  ))
+
+
+def create_stego_lsb_adaptive(image_paths, threshold: float):
+  from steganography import LsbSobelEdgeBitTh
+  steg_tool = LsbSobelEdgeBitTh()
+
+  create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
+    image_path=cover_image_path,
+    output_path=stego_image_path,
+    target_threshold=threshold,
+  ))
+
+
+STEGO_METHODS = {
+  "sequential": create_stego_lsb_sequential,
+  "random":     create_stego_lsb_random,
+  "matching":   create_stego_lsb_matching,
+  "adaptive":   create_stego_lsb_adaptive,
+}
+
+
+def placeholder():
+  print("placeholder")
+
+
+ANALYSIS_METHODS = {
+  "cnn": placeholder,
+  "rs":  placeholder,
+}
+
+
+def main():
+  parser = argparse.ArgumentParser(
+    description="Steganography dataset tool",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  )
+
+  # Defines the path to dataset flag
+  parser.add_argument(
+    "--dataset-path", "-d",
+    type=Path,
+    default=DEFAULT_BASE_DIR,
+    metavar="PATH",
+    help="Path to the dataset base directory"
+  )
+
+  # Defines the main command flag, difining whether steganography of steganalysis should be performed.
+  subparsers = parser.add_subparsers(dest="command", required=True)
+
+  # Defines the analysis flag
+  analysis_parser = subparsers.add_parser("analysis", help="Run analysis")
+  analysis_parser.add_argument(
+    "analysis-method",
+    choices=ANALYSIS_METHODS.keys(),
+    help="Analysis method choice"
+  )
+
+  # Defines the flag for creating stego pictures from the dataset
+  stego_parser = subparsers.add_parser("stego", help="Create stego images")
+  stego_parser.add_argument(
+    "method",
+    choices=STEGO_METHODS.keys(),
+    help="LSB embedding method to use"
+  )
+  stego_parser.add_argument(
+    "--threshold", "-t",
+    type=float,
+    default=0.25,
+    help="Embedding threshold (0.0–1.0)"
+  )
+
+  args = parser.parse_args()
+  #image_paths = build_image_paths(args.dataset_path)
+
+  print(args)
+
+
+  # if args.command == "test":
+  #   test_model(image_paths)
+  # elif args.command == "stego":
+  #   STEGO_METHODS[args.method](image_paths, args.threshold)
+
+
 if __name__ == "__main__":
-  # create_stego_lsb_random(0.5)
-  test_model()
+  main()
   pass

@@ -7,20 +7,13 @@ from PIL import Image
 import random
 from enum import Enum
 import locale
-
 locale.setlocale(locale.LC_ALL, '')
 if __name__ == "__main__":
   from generate import generate_random_bytes, iter_bits_from_bytes
-
+  from ColorModel import ColorModel
 else:
   from .generate import generate_random_bytes, iter_bits_from_bytes
-
-
-
-class ColorModel(str, Enum):
-  RGB = 'RGB'
-  GRAYSCALE = 'L'
-
+  from .ColorModel import ColorModel
 
 
 class LsbRandom:
@@ -57,9 +50,15 @@ class LsbRandom:
     if target_threshold < 0 or target_threshold > 1:
       raise ValueError("target_threshold must be between 0 and 1")
 
-    if color_model not in ColorModel:
-      raise ValueError(f"Unsupported image mode: {color_model}. Supported modes: {list(self.no_channels.keys())}")
+    if color_model not in list(ColorModel):
+      raise ValueError(f"Unsupported image mode: {color_model}. Supported modes: {list(ColorModel)}")
     
+    if not Path(image_path).exists() or not Path(image_path).is_file():
+      raise FileNotFoundError(f"Image file not found: {image_path}")
+    
+    if not output_path.parent.exists():
+      raise FileNotFoundError("Stego directory does not exist.")
+
     # Image Processing
     img = Image.open(image_path).convert(color_model)
     width, height = img.size
