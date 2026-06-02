@@ -13,19 +13,28 @@ class ImgGroup(str, Enum):
 DEFAULT_BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01[.png]"
 
 
-def build_image_paths(base_dir: Path) -> dict:
+def build_image_paths(base_dir: Path, stego_method: str | None = None) -> dict:
   image_paths = {
     ImgGroup.TEST: (base_dir / "test").resolve(),
     ImgGroup.TRAIN: (base_dir / "train").resolve(),
     ImgGroup.VAL: (base_dir / "val").resolve()
   }
+
+  stego_dir_name = (
+    f"stego_{stego_method}"
+    if stego_method is not None
+    else "stego"
+  )
+
   for key, path in image_paths.items():
     (path / "cover").mkdir(parents=True, exist_ok=True)
-    (path / "stego").mkdir(parents=True, exist_ok=True)
+    (path / stego_dir_name).mkdir(parents=True, exist_ok=True)
+
     image_paths[key] = {
       "cover": (path / "cover").resolve(),
-      "stego": (path / "stego").resolve()
+      "stego": (path / stego_dir_name).resolve()
     }
+
   return image_paths
 
 
@@ -108,7 +117,7 @@ STEGO_METHODS = {
 }
 
 
-def placeholder():
+def placeholder(image_paths):
   print("placeholder")
 
 
@@ -139,15 +148,20 @@ def main():
   # Defines the analysis flag
   analysis_parser = subparsers.add_parser("analysis", help="Run analysis")
   analysis_parser.add_argument(
-    "analysis-method",
+    "analysis_method",
     choices=ANALYSIS_METHODS.keys(),
     help="Analysis method choice"
+  )
+  analysis_parser.add_argument(
+    "stego_method",
+    choices=STEGO_METHODS.keys(),
+    help="LSB embedding method to use"
   )
 
   # Defines the flag for creating stego pictures from the dataset
   stego_parser = subparsers.add_parser("stego", help="Create stego images")
   stego_parser.add_argument(
-    "method",
+    "stego_method",
     choices=STEGO_METHODS.keys(),
     help="LSB embedding method to use"
   )
@@ -159,15 +173,14 @@ def main():
   )
 
   args = parser.parse_args()
-  #image_paths = build_image_paths(args.dataset_path)
+  image_paths = build_image_paths(args.dataset_path, args.stego_method)
 
   print(args)
 
-
-  # if args.command == "test":
-  #   test_model(image_paths)
-  # elif args.command == "stego":
-  #   STEGO_METHODS[args.method](image_paths, args.threshold)
+  if args.command == "stego":
+    STEGO_METHODS[args.stego_method](image_paths, args.threshold)
+  elif args.command == "analysis":
+    ANALYSIS_METHODS[args.analysis_method](image_paths)
 
 
 if __name__ == "__main__":
