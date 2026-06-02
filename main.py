@@ -155,7 +155,7 @@ def main():
   analysis_parser.add_argument(
     "stego_method",
     choices=STEGO_METHODS.keys(),
-    help="LSB embedding method to use"
+    help="LSB embedding method to analyse"
   )
 
   # Defines the flag for creating stego pictures from the dataset
