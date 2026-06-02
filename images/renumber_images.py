@@ -25,7 +25,6 @@ def renumber_images(folder_path: Path, ask_confirmation=True):
     print("No numbered image files found in the folder.")
     return
 
-  # print(f"Found {len(image_files)} numbered image files")
   if ask_confirmation:
     print("\nRenaming plan:")
 
