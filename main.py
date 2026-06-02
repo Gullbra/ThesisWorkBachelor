@@ -12,7 +12,7 @@ class ImgGroup(str, Enum):
 DEFAULT_BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01"
 
 
-def build_image_paths(base_dir: Path, stego_method: str | None = None) -> dict:
+def build_image_paths(base_dir: Path, stego_method: str | None = None, threshold: float = 1) -> dict:
   image_paths = {
     ImgGroup.TEST: (base_dir / "test").resolve(),
     ImgGroup.TRAIN: (base_dir / "train").resolve(),
@@ -20,7 +20,7 @@ def build_image_paths(base_dir: Path, stego_method: str | None = None) -> dict:
   }
 
   stego_dir_name = (
-    f"stego_{stego_method}"
+    f"stego_{stego_method}_{threshold}_bpp"
     if stego_method is not None
     else "stego"
   )
@@ -37,36 +37,35 @@ def build_image_paths(base_dir: Path, stego_method: str | None = None) -> dict:
   return image_paths
 
 
-def test_model(image_paths):
-  from steganalysis.srnet_model import test_srnet, TestMode
+# def test_model(image_paths):
+#   from steganalysis.srnet_model import test_srnet, TestMode
 
-  test_srnet(
-    cover_img_dir=image_paths[ImgGroup.TEST]["cover"],
-    stego_img_dir=image_paths[ImgGroup.TEST]["stego"],
-    limit_images=120,
-    mode=TestMode.BALANCED,
-    verbose=True
-  )
+#   test_srnet(
+#     cover_img_dir=image_paths[ImgGroup.TEST]["cover"],
+#     stego_img_dir=image_paths[ImgGroup.TEST]["stego"],
+#     limit_images=120,
+#     mode=TestMode.BALANCED,
+#     verbose=True
+#   )
 
 
 def create_stego_images(image_paths, steganographic_function):
   for key, path in image_paths.items():
-    print(f"Processing {key} images...")
+    print(f"\nProcessing {key} images...")
     cover_images = sorted(path["cover"].glob("*.png"))
 
     for index in range(len(cover_images)):
       image_path = cover_images[index]
-      if index % 1000 == 0:
-        print(f"{index}/{len(cover_images)} ({index/len(cover_images) * 100:.1f}%) images embedded")
-
       steganographic_function(
         image_path,
         path["stego"] / image_path.name
       )
+      if (index + 1) % 500 == 0:
+        print(f"{index + 1}/{len(cover_images)} ({(index + 1)/len(cover_images) * 100:.1f}%) images embedded")
 
 
 def create_stego_lsb_sequential(image_paths, threshold: float):
-  from steganography import LsbSequential
+  from steganography.lsb_sequential import LsbSequential
   steg_tool = LsbSequential()
   create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
     image_path=cover_image_path,
@@ -76,7 +75,7 @@ def create_stego_lsb_sequential(image_paths, threshold: float):
 
 
 def create_stego_lsb_random(image_paths, threshold: float):
-  from steganography import LsbRandom
+  from steganography.lsb_random import LsbRandom
   steg_tool = LsbRandom(123456789)
   create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
     image_path=cover_image_path,
@@ -86,7 +85,7 @@ def create_stego_lsb_random(image_paths, threshold: float):
 
 
 def create_stego_lsb_matching(image_paths, threshold: float):
-  from steganography import LsbMatching
+  from steganography.lsb_matching import LsbMatching
   steg_tool = LsbMatching()
 
   create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
@@ -97,7 +96,7 @@ def create_stego_lsb_matching(image_paths, threshold: float):
 
 
 def create_stego_lsb_adaptive(image_paths, threshold: float):
-  from steganography import LsbSobelEdge
+  from steganography.lsb_adaptive_sobel_bit_threshhold import LsbSobelEdge
   steg_tool = LsbSobelEdge()
 
   create_stego_images(image_paths, lambda cover_image_path, stego_image_path: steg_tool.encode_message(
@@ -171,7 +170,7 @@ def main():
   )
 
   args = parser.parse_args()
-  image_paths = build_image_paths(args.dataset_path, args.stego_method)
+  image_paths = build_image_paths(args.dataset_path, args.stego_method, args.threshold)
 
   print(args)
 

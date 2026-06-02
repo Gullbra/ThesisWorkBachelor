@@ -134,10 +134,10 @@ class LsbSequential:
     if verbose:
       print("Random data encoded successfully!")
 
-    print(
-      f"Stego image saved to "
-      f"{output_path.resolve()}"
-    )
+      print(
+        f"Stego image saved to "
+        f"{output_path.resolve()}"
+      )
 
     return secret_message
 
