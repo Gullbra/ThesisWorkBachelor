@@ -6,10 +6,14 @@ MATLab (version R2025b) - This is for bridging our python code with the RS analy
 
 Python 3.12. At the time of writting this, any python version later than 3.12 had missing wheels for packeges requiered by pytorch, and thus 3.12 was used.
 
+An imagedata set. Bossbase 1.01 is a commonly used data light dataset of grayscale pictures. You can get it at the botton of this page: https://dde.binghamton.edu/download/, or type `y` when prompted when using the install script.
+
+
 ## Setup
 
 Start by cloning a repo, fetching the the subrepos, and creating a venv with python 3.12. 
-This can be done with the following commads:
+This can be done with the following commads. To recreate the experiment described in the paper, prompt `y` 
+to download the dataset and `y` to convert and resize the images.
 
 windowns:
 ```powershell
@@ -29,7 +33,7 @@ chmod +x install.sh
 ```
 
 This creates a local python environment with python 3.12, and tries to install all required packages into it.
-
+Optionally, it also downloads and configures the dataset.
 
 
 ## Command-Line Usage

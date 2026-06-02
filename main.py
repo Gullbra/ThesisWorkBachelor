@@ -10,7 +10,7 @@ class ImgGroup(str, Enum):
   VAL = "VALIDATION"
 
 
-DEFAULT_BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01[.png]"
+DEFAULT_BASE_DIR = Path(__file__).parent / "images/BOSSbase_1.01"
 
 
 def build_image_paths(base_dir: Path, stego_method: str | None = None) -> dict:

@@ -4,7 +4,7 @@ __pycache__
 *.jpg
 *.png
 
-images/
+# images/
 pdf/
 
 .DS_Store

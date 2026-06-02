@@ -1,9 +1,9 @@
-[submodule "srnet_model"]
-	path = srnet_model
-	url = https://github.com/Gullbra/Pytorch-implementation-of-SRNet.git
-[submodule "rs_analysis"]
-	path = rs_analysis
-	url = https://github.com/Gullbra/RS-analysis
+# [submodule "srnet_model"]
+# 	path = srnet_model
+# 	url = https://github.com/Gullbra/Pytorch-implementation-of-SRNet.git
+# [submodule "rs_analysis"]
+# 	path = rs_analysis
+	# url = https://github.com/Gullbra/RS-analysis
 [submodule "steganalysis/rs_analysis"]
 	path = steganalysis/rs_analysis
 	url = https://github.com/Gullbra/RS-analysis
