@@ -1,6 +1,5 @@
 from pathlib import Path
 from enum import Enum
-from rename_imgs import renumber_images
 import argparse
 
 
@@ -53,7 +52,6 @@ def test_model(image_paths):
 def create_stego_images(image_paths, steganographic_function):
   for key, path in image_paths.items():
     print(f"Processing {key} images...")
-    renumber_images(path["cover"], ask_confirmation=False) 
     cover_images = sorted(path["cover"].glob("*.png"))
 
     for index in range(len(cover_images)):

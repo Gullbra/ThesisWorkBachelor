@@ -18,7 +18,7 @@ if ((Get-ChildItem $FolderPath -File).Count -eq 0) {
   exit 1
 }
 
-$existingFiles = Get-ChildItem "$FolderPath\train\", "$FolderPath\val\", "$FolderPath\test\" -ErrorAction SilentlyContinue
+$existingFiles = Get-ChildItem "$FolderPath\train\cover\", "$FolderPath\val\cover\", "$FolderPath\test\cover\" -ErrorAction SilentlyContinue
 if ($existingFiles.Count -gt 0) {
   Write-Error "Destination folders are not empty, aborting to prevent data loss."
   exit 1
@@ -43,7 +43,7 @@ $nTrain = $total - $nTest - $nVal
 
 Write-Host "Total: $total images → train=$nTrain val=$nVal test=$nTest"
 
-New-Item -ItemType Directory -Force -Path "$FolderPath\train", "$FolderPath\val", "$FolderPath\test" | Out-Null
+New-Item -ItemType Directory -Force -Path "$FolderPath\train\cover", "$FolderPath\val\cover", "$FolderPath\test\cover" | Out-Null
 
 Write-Host "Moving images..."
 
@@ -53,8 +53,13 @@ $valImages   = $images[$nTrain..($nTrain + $nVal - 1)]
 $testImages  = $images[($nTrain + $nVal)..($total - 1)]
 
 # Move in bulk
-$trainImages | Move-Item -Destination "$FolderPath\train\"
-$valImages   | Move-Item -Destination "$FolderPath\val\"
-$testImages  | Move-Item -Destination "$FolderPath\test\"
+$trainImages | Move-Item -Destination "$FolderPath\train\cover\"
+$valImages   | Move-Item -Destination "$FolderPath\val\cover\"
+$testImages  | Move-Item -Destination "$FolderPath\test\cover\"
+
+# Renumber or number
+python "$PSScriptRoot/renumber_images.py" "$FolderPath\train\cover\"
+python "$PSScriptRoot/renumber_images.py" "$FolderPath\val\cover\"
+python "$PSScriptRoot/renumber_images.py" "$FolderPath\test\cover\"
 
 Write-Host "Done!"

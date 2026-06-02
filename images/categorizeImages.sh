@@ -22,7 +22,7 @@ if [[ -z "$(ls -A "$folder_path" 2>/dev/null)" ]]; then
   exit 1
 fi
 
-existing=$(find "$folder_path/train" "$folder_path/val" "$folder_path/test" -maxdepth 0 2>/dev/null | wc -l)
+existing=$(find "$folder_path/train/cover" "$folder_path/val/cover" "$folder_path/test/cover" -maxdepth 0 2>/dev/null | wc -l)
 if [[ $existing -gt 0 ]]; then
   echo "Error: destination folders already exist, aborting to prevent data loss"
   exit 1
@@ -49,19 +49,24 @@ n_train=$(( total - n_test - n_val ))
 
 echo "Total: $total images → train=$n_train val=$n_val test=$n_test"
 
-mkdir -p "$folder_path/train" "$folder_path/val" "$folder_path/test"
+mkdir -p "$folder_path/train/cover" "$folder_path/val/cover" "$folder_path/test/cover"
 
 echo "Moving images..."
 
 for (( i=0; i<total; i++ )); do
   img="${images[$i]}"
   if   [[ $i -lt $n_train ]]; then
-    mv "$img" "$folder_path/train/"
+    mv "$img" "$folder_path/train/cover/"
   elif [[ $i -lt $(( n_train + n_val )) ]]; then
-    mv "$img" "$folder_path/val/"
+    mv "$img" "$folder_path/val/cover/"
   else
-    mv "$img" "$folder_path/test/"
+    mv "$img" "$folder_path/test/cover/"
   fi
 done
+
+# Renumber or number
+python "$(dirname "$0")/renumber_images.py" "$FolderPath/train/cover/"
+python "$(dirname "$0")/renumber_images.py" "$FolderPath/val/cover/"
+python "$(dirname "$0")/renumber_images.py" "$FolderPath/test/cover/"
 
 echo "Done!"
