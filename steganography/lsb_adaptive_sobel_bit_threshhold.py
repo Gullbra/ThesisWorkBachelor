@@ -46,6 +46,10 @@ class LsbSobelEdge:
     color_model: ColorModel = ColorModel.GRAYSCALE,
     verbose: bool = False,
   ) -> bytes:
+    """
+    Encode random data into an image using sobel adaptive LSB steganography.
+    """
+
     if target_threshold < 0 or target_threshold > 1:
       raise ValueError("target_threshold must be between 0 and 1")
 
@@ -182,7 +186,10 @@ class LsbSobelEdge:
     color_model: ColorModel = ColorModel.GRAYSCALE,
     verbose: bool = False,
   ) -> bytes:
-    
+    """
+    Decode a message from an image embedded by this class.
+    """
+
     if not Path(stego_image_path).exists() or not Path(stego_image_path).is_file():
       raise FileNotFoundError(f"Stego image file not found: {stego_image_path}")
     

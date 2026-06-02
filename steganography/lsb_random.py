@@ -128,7 +128,7 @@ class LsbRandom:
     verbose: bool = False,
   ) -> bytes:
     """
-    Decode message encoded with random LSB steganography.
+    Decode a message from an image embedded by this class.
     """
 
     if color_model not in list(ColorModel):

@@ -149,7 +149,7 @@ class LsbSequential:
     color_model: ColorModel = ColorModel.GRAYSCALE
   ) -> bytes:
     """
-    Decode a message from an image using sequential LSB steganography.
+    Decode a message from an image embedded by this class.
     """
     # Open image and convert to numpy array
     img = Image.open(image_path).convert(color_model)
